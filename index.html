@@ -23,6 +23,14 @@
     </ul>
 
     <div class="field">
+      <label>Mode de jeu</label>
+      <div class="segmented" id="mode-toggle" role="group" aria-label="Mode de jeu">
+        <button type="button" class="segmented__btn is-active" data-mode="open">Réponse libre</button>
+        <button type="button" class="segmented__btn" data-mode="qcm">QCM — 4 choix</button>
+      </div>
+    </div>
+
+    <div class="field">
       <label for="deck-size">Nombre de drapeaux</label>
       <select id="deck-size">
         <option value="0" id="opt-all" selected>Tous les drapeaux</option>
@@ -50,6 +58,10 @@
       <img id="flag-img" class="flag" alt="Drapeau à identifier">
     </div>
 
+    <!-- mode QCM : 4 propositions -->
+    <div id="choices" class="choices" hidden></div>
+
+    <!-- mode réponse libre -->
     <form id="answer-form" class="answer" autocomplete="off">
       <input id="answer-input" class="answer__input" type="text" placeholder="Quel est ce pays ?"
              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
@@ -58,6 +70,8 @@
     </form>
 
     <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+    <button id="btn-next" class="btn btn--primary" type="button" hidden>Continuer →</button>
   </section>
 
   <!-- ÉCRAN 3 : FIN -->

@@ -17,20 +17,29 @@ puis ouvre http://localhost:5173.
 > Les images des drapeaux sont chargées depuis [flagcdn.com](https://flagcdn.com) :
 > une connexion internet est nécessaire.
 
+## Deux modes de jeu
+
+Le mode se choisit sur l'écran d'accueil.
+
+| Mode | Comment on répond |
+|---|---|
+| **Réponse libre** | Tu tapes le nom du pays, puis **Entrée** (ou **Valider**). Un bouton **Je ne sais pas** révèle la réponse. |
+| **QCM — 4 choix** | Quatre propositions, dont la bonne. Clic, ou touches **1** à **4**. La bonne réponse passe en vert, ton erreur en rouge. |
+
 ## Règles
 
-1. L'écran d'accueil propose un bouton **Start** (et le choix du nombre de drapeaux).
+1. L'écran d'accueil propose le mode, le nombre de drapeaux, et un bouton **Start**.
 2. Les drapeaux sont présentés un par un, dans un ordre mélangé.
-3. Tu tapes le nom du pays et valides (bouton **Valider** ou touche **Entrée**).
+3. À chaque drapeau :
    - **Bonne réponse** → le drapeau sort définitivement du paquet.
    - **Mauvaise réponse** → la bonne réponse s'affiche, et le drapeau est
      réinséré à une position aléatoire du paquet : il reviendra plus tard.
-4. **Je ne sais pas** révèle la réponse et compte comme une erreur (le drapeau revient aussi).
-5. La partie se termine quand le paquet est vide. L'écran final affiche le
+     **Continuer** (ou **Entrée**) passe au suivant.
+4. La partie se termine quand le paquet est vide. L'écran final affiche le
    nombre de drapeaux trouvés du premier coup, le total d'erreurs, la durée,
    et la liste des drapeaux à revoir.
 
-## Saisie des réponses
+## Saisie des réponses (mode réponse libre)
 
 La comparaison est souple :
 

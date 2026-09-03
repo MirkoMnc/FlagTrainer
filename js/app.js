@@ -109,6 +109,8 @@
   var feedback = $("feedback");
   var btnValidate = $("btn-validate");
   var btnSkip = $("btn-skip");
+  var btnNext = $("btn-next");
+  var choicesBox = $("choices");
   var preloader = new Image();
 
   /* ------------------------------------------------------------------
@@ -116,6 +118,7 @@
      ------------------------------------------------------------------ */
   var state = null;
   var AWAIT_NEXT = false;   // true = on attend "Continuer" après une erreur
+  var MODE = "open";        // "open" = réponse libre, "qcm" = 4 propositions
 
   function shuffle(arr) {
     var a = arr.slice();
@@ -139,6 +142,7 @@
 
     state = {
       queue: deck,                 // drapeaux restant à trouver
+      mode: MODE,
       total: deck.length,
       solved: 0,
       errors: 0,
@@ -168,15 +172,61 @@
     // Préchargement du drapeau suivant pour éviter le clignotement.
     if (state.queue[1]) preloader.src = FLAG_URL + state.queue[1].code + ".png";
 
-    input.value = "";
-    input.disabled = false;
-    input.focus();
-    btnSkip.hidden = false;
-    btnValidate.textContent = "Valider";
     feedback.className = "feedback";
     feedback.textContent = "";
+    btnNext.hidden = true;
+
+    if (state.mode === "qcm") {
+      form.hidden = true;
+      choicesBox.hidden = false;
+      buildChoices(c);
+    } else {
+      choicesBox.hidden = true;
+      form.hidden = false;
+      input.value = "";
+      input.disabled = false;
+      input.focus();
+      btnSkip.hidden = false;
+    }
 
     updateHud();
+  }
+
+  // Construit les 4 propositions : la bonne + 3 pays tirés au hasard.
+  function buildChoices(c) {
+    var pool = [];
+    while (pool.length < 3) {
+      var pick = COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)];
+      if (pick.code === c.code) continue;
+      if (pool.some(function (p) { return p.code === pick.code; })) continue;
+      pool.push(pick);
+    }
+
+    choicesBox.innerHTML = "";
+    shuffle(pool.concat([c])).forEach(function (country, i) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "choice";
+      btn.dataset.code = country.code;
+      btn.innerHTML = "<span class='choice__key'>" + (i + 1) + "</span>" + country.name;
+      btn.addEventListener("click", function () { pickChoice(country.code); });
+      choicesBox.appendChild(btn);
+    });
+  }
+
+  function pickChoice(code) {
+    if (AWAIT_NEXT || !state || state.mode !== "qcm") return;
+    var c = current();
+
+    // Verrouille les 4 boutons et colore la bonne / la mauvaise réponse.
+    Array.prototype.forEach.call(choicesBox.children, function (btn) {
+      btn.disabled = true;
+      if (btn.dataset.code === c.code) btn.classList.add("is-correct");
+      else if (btn.dataset.code === code) btn.classList.add("is-wrong");
+    });
+
+    if (code === c.code) return handleCorrect(c);
+    handleWrong(c, countryByCode(code).name);
   }
 
   flagImg.addEventListener("load", function () { flagImg.classList.remove("is-loading"); });
@@ -196,6 +246,7 @@
   /* ------------------------------------------------------------------
      Réponses
      ------------------------------------------------------------------ */
+  // Mode réponse libre : on compare la saisie au pays attendu.
   function submitAnswer() {
     if (AWAIT_NEXT) return goNext();
 
@@ -205,29 +256,33 @@
     var c = current();
     var found = matchAnswer(raw);
 
-    if (found && found.code === c.code) {
-      if (!state.missed[c.code]) state.firstTry++;
-      state.solved++;
-      state.queue.shift();
+    if (found && found.code === c.code) return handleCorrect(c, found.fuzzy);
+    handleWrong(c, found ? countryByCode(found.code).name : null);
+  }
 
-      feedback.className = "feedback feedback--ok";
-      feedback.innerHTML = "✅ Exact : <b>" + c.name + "</b>" +
-        (found.fuzzy ? "<small>Orthographe exacte : " + c.name + "</small>" : "");
-      updateHud();
+  // Le drapeau est trouvé : il sort définitivement du paquet.
+  function handleCorrect(c, fuzzy) {
+    if (!state.missed[c.code]) state.firstTry++;
+    state.solved++;
+    state.queue.shift();
 
-      // Petite pause pour laisser lire le retour, puis carte suivante.
-      input.disabled = true;
-      setTimeout(function () { if (state) render(); }, 550);
-      return;
-    }
+    feedback.className = "feedback feedback--ok";
+    feedback.innerHTML = "✅ Exact : <b>" + c.name + "</b>" +
+      (fuzzy ? "<small>Orthographe exacte : " + c.name + "</small>" : "");
+    updateHud();
 
-    // Mauvaise réponse : on remet le drapeau plus loin dans le paquet.
+    // Petite pause pour laisser lire le retour, puis carte suivante.
+    input.disabled = true;
+    setTimeout(function () { if (state) render(); }, 550);
+  }
+
+  // Mauvaise réponse : on remet le drapeau plus loin dans le paquet.
+  function handleWrong(c, proposedName) {
     state.errors++;
     state.missed[c.code] = (state.missed[c.code] || 0) + 1;
 
-    var proposed = found ? countryByCode(found.code) : null;
     feedback.className = "feedback feedback--ko";
-    feedback.innerHTML = "❌ Raté" + (proposed ? " — tu as répondu <b>" + proposed.name + "</b>" : "") +
+    feedback.innerHTML = "❌ Raté" + (proposedName ? " — tu as répondu <b>" + proposedName + "</b>" : "") +
       ". C'était <b>" + c.name + "</b>." +
       "<small>Ce drapeau reviendra plus tard dans la partie.</small>";
 
@@ -265,8 +320,8 @@
     input.value = "";
     input.disabled = true;
     btnSkip.hidden = true;
-    btnValidate.textContent = "Continuer";
-    btnValidate.focus();
+    btnNext.hidden = false;
+    btnNext.focus();
   }
 
   function goNext() {
@@ -324,7 +379,18 @@
      ------------------------------------------------------------------ */
   $("opt-all").textContent = "Tous les drapeaux (" + COUNTRIES.length + ")";
 
+  // Choix du mode sur l'écran d'accueil.
+  Array.prototype.forEach.call($("mode-toggle").children, function (btn) {
+    btn.addEventListener("click", function () {
+      MODE = btn.dataset.mode;
+      Array.prototype.forEach.call($("mode-toggle").children, function (b) {
+        b.classList.toggle("is-active", b === btn);
+      });
+    });
+  });
+
   $("btn-start").addEventListener("click", startGame);
+  btnNext.addEventListener("click", goNext);
   $("btn-replay").addEventListener("click", function () { showScreen("start"); });
 
   form.addEventListener("submit", function (e) {
@@ -338,8 +404,16 @@
   });
 
   document.addEventListener("keydown", function (e) {
-    if (e.key !== "Enter" || !AWAIT_NEXT) return;
     if (!screens.game.classList.contains("screen--active")) return;
+
+    // En QCM, les touches 1 à 4 sélectionnent une proposition.
+    if (!AWAIT_NEXT && state && state.mode === "qcm" && /^[1-4]$/.test(e.key)) {
+      var btn = choicesBox.children[Number(e.key) - 1];
+      if (btn && !btn.disabled) { e.preventDefault(); pickChoice(btn.dataset.code); }
+      return;
+    }
+
+    if (e.key !== "Enter" || !AWAIT_NEXT) return;
     // Le même Enter vient peut-être de valider la réponse : ne pas enchaîner deux fois.
     if (e.target === input) return;
     e.preventDefault();
