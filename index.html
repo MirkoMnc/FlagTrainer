@@ -40,6 +40,8 @@
       </select>
     </div>
 
+    <p id="best-line" class="best"></p>
+
     <button id="btn-start" class="btn btn--primary btn--big">Start</button>
   </section>
 
@@ -85,6 +87,12 @@
       <div class="score"><span id="score-time">0:00</span><small>durée</small></div>
     </div>
 
+    <div id="board-block" class="review" hidden>
+      <h3>Classement — <span id="board-title"></span></h3>
+      <ol id="board-list" class="board"></ol>
+      <button id="btn-clear-board" class="btn btn--ghost btn--small" type="button">Effacer ce classement</button>
+    </div>
+
     <div id="review-block" class="review" hidden>
       <h3>À revoir</h3>
       <div id="review-list" class="review__list"></div>
@@ -96,6 +104,7 @@
 </main>
 
 <script src="js/countries.js"></script>
+<script src="js/scores.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

@@ -303,6 +303,43 @@ select:focus, .answer__input:focus {
 .review__item img { width: 38px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
 .review__item .miss { color: var(--ko); font-size: .78rem; }
 
+/* ---------- classement local ---------- */
+.best {
+  color: var(--muted);
+  font-size: .92rem;
+  margin: -8px 0 22px;
+}
+
+.board {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+.board__row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+.board__row:nth-child(odd) { background: rgba(255, 255, 255, .03); }
+.board__rank {
+  color: var(--muted);
+  font-size: .82rem;
+  text-align: center;
+}
+.board__score { font-weight: 600; }
+.board__meta { color: var(--muted); font-size: .82rem; }
+
+.board__row.is-new {
+  border-color: var(--accent);
+  background: rgba(79, 140, 255, .14);
+}
+.board__row.is-new .board__rank,
+.board__row.is-new .board__score { color: var(--accent); }
+
 @media (max-width: 480px) {
   .choices { grid-template-columns: 1fr; }
   .segmented { width: 100%; }

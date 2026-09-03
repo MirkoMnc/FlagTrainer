@@ -143,6 +143,7 @@
     state = {
       queue: deck,                 // drapeaux restant à trouver
       mode: MODE,
+      size: size,                  // catégorie de classement (0 = tous)
       total: deck.length,
       solved: 0,
       errors: 0,
@@ -332,15 +333,16 @@
   /* ------------------------------------------------------------------
      Fin de partie
      ------------------------------------------------------------------ */
-  function endGame() {
+  function endGame(abandoned) {
     var seconds = Math.round((Date.now() - state.startedAt) / 1000);
-    var mm = Math.floor(seconds / 60), ss = seconds % 60;
 
     $("score-first-try").textContent = state.firstTry + " / " + state.total;
     $("score-errors").textContent = state.errors;
-    $("score-time").textContent = mm + ":" + (ss < 10 ? "0" : "") + ss;
-    $("end-summary").textContent = state.total + " drapeaux identifiés, " +
-      state.firstTry + " du premier coup.";
+    $("score-time").textContent = formatTime(seconds);
+    $("end-summary").textContent = abandoned
+      ? "Partie abandonnée : " + state.solved + " drapeau" + (state.solved > 1 ? "x" : "") +
+        " sur " + state.total + " (score non enregistré au classement)."
+      : state.total + " drapeaux identifiés, " + state.firstTry + " du premier coup.";
 
     var codes = Object.keys(state.missed);
     var block = $("review-block"), list = $("review-list");
@@ -370,8 +372,68 @@
       block.hidden = true;
     }
 
+    // Classement local de la catégorie jouée (mode × taille du paquet).
+    lastMode = state.mode;
+    lastSize = state.size;
+    var rank = abandoned ? -1 : Scores.add(lastMode, lastSize, {
+      errors: state.errors,
+      seconds: seconds,
+      firstTry: state.firstTry,
+      total: state.total
+    });
+    renderBoard(rank);
+
     state = null;
     showScreen("end");
+  }
+
+  /* ------------------------------------------------------------------
+     Classement local
+     ------------------------------------------------------------------ */
+  var lastMode = null, lastSize = null;
+
+  function formatTime(seconds) {
+    var mm = Math.floor(seconds / 60), ss = seconds % 60;
+    return mm + ":" + (ss < 10 ? "0" : "") + ss;
+  }
+
+  function formatDate(ms) {
+    var d = new Date(ms);
+    return ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
+  }
+
+  function plural(n) { return n + (n > 1 ? " erreurs" : " erreur"); }
+
+  // newRank = rang de la partie qui vient d'être jouée, pour la mettre en avant.
+  function renderBoard(newRank) {
+    var rows = Scores.list(lastMode, lastSize);
+    var block = $("board-block"), list = $("board-list");
+
+    $("board-title").textContent = Scores.label(lastMode, lastSize);
+    list.innerHTML = "";
+
+    if (!rows.length) { block.hidden = true; return; }
+
+    rows.forEach(function (row, i) {
+      var li = document.createElement("li");
+      li.className = "board__row" + (i === newRank ? " is-new" : "");
+      li.innerHTML =
+        "<span class='board__rank'>" + (i + 1) + "</span>" +
+        "<span class='board__score'>" + plural(row.errors) + "</span>" +
+        "<span class='board__meta'>" + formatTime(row.seconds) + " · " + formatDate(row.date) + "</span>";
+      list.appendChild(li);
+    });
+
+    block.hidden = false;
+  }
+
+  // Record affiché sur l'écran d'accueil, pour le mode et la taille choisis.
+  function updateBestLine() {
+    var size = parseInt($("deck-size").value, 10) || 0;
+    var b = Scores.best(MODE, size);
+    $("best-line").textContent = b
+      ? "🏆 Record " + Scores.label(MODE, size) + " : " + plural(b.errors) + " en " + formatTime(b.seconds)
+      : "Aucun score enregistré pour cette catégorie.";
   }
 
   /* ------------------------------------------------------------------
@@ -386,12 +448,24 @@
       Array.prototype.forEach.call($("mode-toggle").children, function (b) {
         b.classList.toggle("is-active", b === btn);
       });
+      updateBestLine();
     });
   });
 
+  $("deck-size").addEventListener("change", updateBestLine);
+
   $("btn-start").addEventListener("click", startGame);
   btnNext.addEventListener("click", goNext);
-  $("btn-replay").addEventListener("click", function () { showScreen("start"); });
+  $("btn-replay").addEventListener("click", function () {
+    showScreen("start");
+    updateBestLine();
+  });
+
+  $("btn-clear-board").addEventListener("click", function () {
+    if (!confirm("Effacer le classement « " + Scores.label(lastMode, lastSize) + " » ?")) return;
+    Scores.clear(lastMode, lastSize);
+    renderBoard(-1);
+  });
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -423,6 +497,8 @@
   btnSkip.addEventListener("click", skipAnswer);
 
   $("btn-quit").addEventListener("click", function () {
-    if (state && confirm("Abandonner la partie en cours ?")) endGame();
+    if (state && confirm("Abandonner la partie en cours ?")) endGame(true);
   });
+
+  updateBestLine();
 })();

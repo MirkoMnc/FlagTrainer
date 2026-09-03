@@ -39,6 +39,21 @@ Le mode se choisit sur l'écran d'accueil.
    nombre de drapeaux trouvés du premier coup, le total d'erreurs, la durée,
    et la liste des drapeaux à revoir.
 
+## Classement local
+
+Les 10 meilleures parties sont conservées **dans ton navigateur**
+(`localStorage`) — rien n'est envoyé sur internet, et le classement ne suit pas
+d'un appareil à l'autre.
+
+- **Un classement par catégorie** : chaque combinaison mode × taille du paquet a
+  le sien (QCM · 20 drapeaux, Réponse libre · tous les drapeaux, etc.).
+- **Tri sur le nombre d'erreurs**, du plus petit au plus grand ; à égalité, la
+  partie la plus rapide passe devant.
+- L'écran d'accueil rappelle ton record pour le mode et la taille sélectionnés ;
+  l'écran final met en évidence la partie que tu viens de jouer.
+- Une partie **abandonnée n'est pas enregistrée**.
+- Le bouton **Effacer ce classement** vide la catégorie affichée.
+
 ## Saisie des réponses (mode réponse libre)
 
 La comparaison est souple :
@@ -56,7 +71,8 @@ La comparaison est souple :
 index.html         écrans (accueil / jeu / résultats)
 css/style.css      thème sombre, responsive
 js/countries.js    les 195 pays : code ISO, nom français, synonymes
-js/app.js          logique du jeu (paquet, comparaison, score)
+js/scores.js       classement local (localStorage), une liste par catégorie
+js/app.js          logique du jeu (paquet, modes, comparaison, score)
 dev-server.js      serveur statique optionnel
 ```
 
