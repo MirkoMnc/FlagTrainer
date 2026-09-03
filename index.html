@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlagTrainer — Apprendre les drapeaux du monde</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚩</text></svg>">
+</head>
+<body>
+
+<main class="app">
+
+  <!-- ÉCRAN 1 : ACCUEIL -->
+  <section id="screen-start" class="screen screen--active">
+    <h1 class="title">Flag<span>Trainer</span></h1>
+    <p class="subtitle">Apprends à reconnaître les drapeaux du monde entier.</p>
+
+    <ul class="rules">
+      <li><b>Bonne réponse</b> : le drapeau sort du paquet.</li>
+      <li><b>Mauvaise réponse</b> : il revient plus tard, à une place aléatoire.</li>
+      <li>La partie se termine quand le paquet est vide.</li>
+    </ul>
+
+    <div class="field">
+      <label for="deck-size">Nombre de drapeaux</label>
+      <select id="deck-size">
+        <option value="0" id="opt-all" selected>Tous les drapeaux</option>
+        <option value="20">20 (rapide)</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+    </div>
+
+    <button id="btn-start" class="btn btn--primary btn--big">Start</button>
+  </section>
+
+  <!-- ÉCRAN 2 : JEU -->
+  <section id="screen-game" class="screen">
+    <header class="hud">
+      <div class="hud__item"><span class="hud__value" id="stat-remaining">0</span><span class="hud__label">restants</span></div>
+      <div class="hud__item"><span class="hud__value" id="stat-done">0</span><span class="hud__label">trouvés</span></div>
+      <div class="hud__item"><span class="hud__value" id="stat-errors">0</span><span class="hud__label">erreurs</span></div>
+      <button id="btn-quit" class="btn btn--ghost btn--small" type="button">Abandonner</button>
+    </header>
+
+    <div class="progress"><div class="progress__bar" id="progress-bar"></div></div>
+
+    <div class="flag-box">
+      <img id="flag-img" class="flag" alt="Drapeau à identifier">
+    </div>
+
+    <form id="answer-form" class="answer" autocomplete="off">
+      <input id="answer-input" class="answer__input" type="text" placeholder="Quel est ce pays ?"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button id="btn-validate" class="btn btn--primary" type="submit">Valider</button>
+      <button id="btn-skip" class="btn btn--ghost" type="button">Je ne sais pas</button>
+    </form>
+
+    <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <!-- ÉCRAN 3 : FIN -->
+  <section id="screen-end" class="screen">
+    <h2 class="title title--small">Partie terminée&nbsp;!</h2>
+    <p id="end-summary" class="subtitle"></p>
+
+    <div class="scoreboard">
+      <div class="score"><span id="score-first-try">0</span><small>du premier coup</small></div>
+      <div class="score"><span id="score-errors">0</span><small>erreurs au total</small></div>
+      <div class="score"><span id="score-time">0:00</span><small>durée</small></div>
+    </div>
+
+    <div id="review-block" class="review" hidden>
+      <h3>À revoir</h3>
+      <div id="review-list" class="review__list"></div>
+    </div>
+
+    <button id="btn-replay" class="btn btn--primary btn--big">Rejouer</button>
+  </section>
+
+</main>
+
+<script src="js/countries.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
