@@ -30,7 +30,7 @@ var WorldMap = (function () {
 
     loading = new Promise(function (resolve, reject) {
       var s = document.createElement("script");
-      s.src = "js/world-map-data.js?v=7";
+      s.src = "js/world-map-data.js?v=8";
       s.onload = resolve;
       s.onerror = function () { loading = null; reject(new Error("carte indisponible")); };
       document.head.appendChild(s);

@@ -17,17 +17,17 @@ puis ouvre http://localhost:5173.
 > Les images des drapeaux sont chargées depuis [flagcdn.com](https://flagcdn.com) :
 > une connexion internet est nécessaire.
 
-## Trois modes de jeu
+## Quatre entraînements
 
-Le menu principal propose deux entrées : **Drapeaux** (réponse libre ou QCM)
-et **Carte**. Chacune mène à un écran de réglages (mode, nombre de drapeaux,
-record en cours) avant de lancer la partie.
+Le menu principal propose quatre entrées. Chacune mène à un écran de réglages
+(variante, nombre de drapeaux, record en cours) avant de lancer la partie.
 
-| Mode | Comment on répond |
+| Entrée | Ce qu'il faut trouver |
 |---|---|
-| **Réponse libre** | Tu tapes le nom du pays, puis **Entrée** (ou **Valider**). Un bouton **Je ne sais pas** révèle la réponse. |
-| **QCM — 4 choix** | Quatre propositions, dont la bonne. Clic, ou touches **1** à **4**. La bonne réponse passe en vert, ton erreur en rouge. |
-| **Carte** | Tu cliques sur le pays directement sur une carte du monde. Molette ou boutons **+ / −** pour zoomer, glisser pour déplacer, **⟲** pour revenir à la vue monde. En cas d'erreur, la carte se recadre sur la bonne réponse. |
+| **Drapeaux** | Le pays du drapeau — en **réponse libre** (texte, **Entrée** pour valider, **Je ne sais pas** pour révéler) ou en **QCM** (4 propositions, clic ou touches **1** à **4**). |
+| **Capitales** | La capitale du pays affiché avec son drapeau — réponse libre ou QCM. Plusieurs noms sont acceptés quand il y a débat (Pretoria / Le Cap, Sucre / La Paz, Amsterdam / La Haye…). |
+| **Carte** | La position du pays sur une carte du monde. Molette ou **+ / −** pour zoomer, glisser pour déplacer, **⟲** pour la vue monde. En cas d'erreur, la carte se recadre sur la bonne réponse. |
+| **Ultime** | Les trois d'affilée pour chaque drapeau : son pays (texte), sa place sur la carte, puis sa capitale (texte). Une erreur à n'importe quelle étape renvoie le drapeau dans le paquet, et il faudra refaire les trois. |
 
 En mode carte, les micro-États (Monaco, Singapour, Malte, îles du Pacifique…)
 sont signalés par un petit cercle cliquable. La carte (≈ 1 Mo) n'est chargée
@@ -35,7 +35,7 @@ que la première fois que ce mode est lancé.
 
 ## Règles
 
-1. Depuis le menu, choisis **Drapeaux** ou **Carte**, puis le mode et le nombre de drapeaux, et **Start**.
+1. Depuis le menu, choisis un entraînement, puis la variante et le nombre de drapeaux, et **Start**.
 2. Les drapeaux sont présentés un par un, dans un ordre mélangé.
 3. À chaque drapeau :
    - **Bonne réponse** → le drapeau sort définitivement du paquet.
@@ -78,6 +78,7 @@ La comparaison est souple :
 index.html         écrans (accueil / jeu / résultats)
 css/style.css      thème sombre, responsive
 js/countries.js    les 195 pays : code ISO, nom français, synonymes
+js/capitals.js     les capitales (nom affiché + noms acceptés)
 js/scores.js       classement local (localStorage), une liste par catégorie
 js/map.js          carte interactive du mode Carte (zoom, clic, recadrage)
 js/world-map-data.js  la carte SVG sous forme de chaîne JS, chargée à la demande

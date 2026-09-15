@@ -6,7 +6,7 @@
   <!-- Le paramètre ?v= des fichiers CSS/JS force le navigateur à recharger les fichiers
        après une mise à jour du site : incrémenter à chaque publication. -->
   <title>FlagTrainer — Apprendre les drapeaux du monde</title>
-  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="stylesheet" href="css/style.css?v=8">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚩</text></svg>">
 </head>
 <body>
@@ -24,10 +24,20 @@
         <span class="menu-card__title">Drapeaux</span>
         <span class="menu-card__desc">Un drapeau s'affiche : retrouve son pays, en réponse libre ou en QCM.</span>
       </button>
+      <button type="button" class="menu-card" data-category="capital">
+        <span class="menu-card__icon">🏛️</span>
+        <span class="menu-card__title">Capitales</span>
+        <span class="menu-card__desc">Un drapeau et son pays s'affichent : donne la capitale, en réponse libre ou en QCM.</span>
+      </button>
       <button type="button" class="menu-card" data-category="map">
         <span class="menu-card__icon">🗺️</span>
         <span class="menu-card__title">Carte</span>
         <span class="menu-card__desc">Un drapeau s'affiche : clique sur son pays sur la carte du monde.</span>
+      </button>
+      <button type="button" class="menu-card menu-card--ultimate" data-category="ultimate">
+        <span class="menu-card__icon">🏆</span>
+        <span class="menu-card__title">Ultime</span>
+        <span class="menu-card__desc">Le pays, sa place sur la carte, puis sa capitale. Les trois, ou le drapeau revient.</span>
       </button>
     </div>
 
@@ -80,7 +90,10 @@
 
     <div class="flag-box">
       <img id="flag-img" class="flag" alt="Drapeau à identifier">
+      <div id="flag-caption" class="flag-caption" hidden></div>
     </div>
+
+    <p id="step-hint" class="step-hint" hidden></p>
 
     <!-- mode QCM : 4 propositions -->
     <div id="choices" class="choices" hidden></div>
@@ -140,9 +153,10 @@
 
 </main>
 
-<script src="js/countries.js?v=7"></script>
-<script src="js/scores.js?v=7"></script>
-<script src="js/map.js?v=7"></script>
-<script src="js/app.js?v=7"></script>
+<script src="js/countries.js?v=8"></script>
+<script src="js/capitals.js?v=8"></script>
+<script src="js/scores.js?v=8"></script>
+<script src="js/map.js?v=8"></script>
+<script src="js/app.js?v=8"></script>
 </body>
 </html>

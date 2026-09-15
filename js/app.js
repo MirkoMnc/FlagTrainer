@@ -1,6 +1,11 @@
 /* FlagTrainer — logique du jeu.
    Le paquet de drapeaux est une file : une bonne réponse retire la carte,
-   une mauvaise réponse la réinsère à une position aléatoire plus loin. */
+   une mauvaise réponse la réinsère à une position aléatoire plus loin.
+
+   Chaque mode est une suite d'ÉTAPES à réussir pour un même drapeau :
+   nom du pays (texte ou QCM), position sur la carte, capitale (texte ou QCM).
+   Le mode Ultime enchaîne les trois ; une erreur à n'importe quelle étape
+   renvoie le drapeau dans le paquet. */
 
 (function () {
   "use strict";
@@ -90,12 +95,55 @@
     return codes.length === 1 ? { code: codes[0], fuzzy: true } : null;
   }
 
+  /* La saisie correspond-elle à la capitale du pays `code` ?
+     Retourne { ok, fuzzy }. On ne compare qu'aux noms acceptés de CE pays. */
+  function matchCapital(input, code) {
+    var key = normalize(input);
+    if (!key) return { ok: false };
+    var names = CAPITALS[code] || [];
+    var fuzzy = false;
+
+    for (var i = 0; i < names.length; i++) {
+      var k = normalize(names[i]);
+      if (k === key) return { ok: true, fuzzy: false };
+      var tol = tolerance(Math.min(k.length, key.length));
+      if (tol && Math.abs(k.length - key.length) <= tol && levenshtein(k, key) <= tol) fuzzy = true;
+    }
+    return fuzzy ? { ok: true, fuzzy: true } : { ok: false };
+  }
+
   function countryByCode(code) {
     for (var i = 0; i < COUNTRIES.length; i++) {
       if (COUNTRIES[i].code === code) return COUNTRIES[i];
     }
     return null;
   }
+
+  function capitalOf(code) { return (CAPITALS[code] || ["?"])[0]; }
+
+  /* ------------------------------------------------------------------
+     Modes et étapes
+     ------------------------------------------------------------------ */
+  var MODES = {
+    "open":     { steps: ["name-open"] },
+    "qcm":      { steps: ["name-qcm"] },
+    "map":      { steps: ["map"] },
+    "cap-open": { steps: ["capital-open"], showName: true },
+    "cap-qcm":  { steps: ["capital-qcm"],  showName: true },
+    "ultimate": { steps: ["name-open", "map", "capital-open"] }
+  };
+
+  var STEP_PROMPTS = {
+    "name-open":    "Quel est ce pays ?",
+    "name-qcm":     "Quel est ce pays ?",
+    "map":          "Place-le sur la carte",
+    "capital-open": "Quelle est sa capitale ?",
+    "capital-qcm":  "Quelle est sa capitale ?"
+  };
+
+  function stepKind() { return MODES[state.mode].steps[state.step]; }
+  function isCapitalStep(kind) { return kind.indexOf("capital") === 0; }
+  function needsMap(mode) { return MODES[mode].steps.indexOf("map") !== -1; }
 
   /* ------------------------------------------------------------------
      Éléments du DOM
@@ -104,10 +152,11 @@
 
   var screens = { menu: $("screen-menu"), start: $("screen-start"), game: $("screen-game"), end: $("screen-end") };
   var flagImg = $("flag-img");
+  var flagCaption = $("flag-caption");
+  var stepHint = $("step-hint");
   var input = $("answer-input");
   var form = $("answer-form");
   var feedback = $("feedback");
-  var btnValidate = $("btn-validate");
   var btnSkip = $("btn-skip");
   var btnNext = $("btn-next");
   var choicesBox = $("choices");
@@ -120,7 +169,7 @@
      ------------------------------------------------------------------ */
   var state = null;
   var AWAIT_NEXT = false;   // true = on attend "Continuer" après une erreur
-  var MODE = "open";        // "open" = réponse libre, "qcm" = 4 propositions
+  var MODE = "open";
 
   function shuffle(arr) {
     var a = arr.slice();
@@ -146,6 +195,7 @@
       state = {
         queue: deck,                 // drapeaux restant à trouver
         mode: MODE,
+        step: 0,                     // étape en cours pour le drapeau courant
         size: size,                  // catégorie de classement (0 = tous)
         total: deck.length,
         solved: 0,
@@ -156,14 +206,13 @@
       };
 
       AWAIT_NEXT = false;
-      screens.game.classList.toggle("screen--map", MODE === "map");
       showScreen("game");
       render();
     }
 
-    if (MODE !== "map") return begin();
+    if (!needsMap(MODE)) return begin();
 
-    // Le mode carte charge la carte (≈1 Mo) la première fois seulement.
+    // Les modes avec carte la chargent (≈1 Mo) la première fois seulement.
     var btn = $("btn-start");
     btn.disabled = true;
     btn.textContent = "Chargement de la carte…";
@@ -185,12 +234,31 @@
     var c = current();
     if (!c) return endGame();
 
-    flagImg.classList.add("is-loading");
-    flagImg.src = FLAG_URL + c.code + ".png";
-    flagImg.alt = "Drapeau à identifier";
+    var mode = MODES[state.mode];
+    var kind = stepKind();
 
-    // Préchargement du drapeau suivant pour éviter le clignotement.
-    if (state.queue[1]) preloader.src = FLAG_URL + state.queue[1].code + ".png";
+    // Nouveau drapeau (première étape) : on change l'image.
+    if (state.step === 0) {
+      flagImg.classList.add("is-loading");
+      flagImg.src = FLAG_URL + c.code + ".png";
+      flagImg.alt = "Drapeau à identifier";
+      // Préchargement du drapeau suivant pour éviter le clignotement.
+      if (state.queue[1]) preloader.src = FLAG_URL + state.queue[1].code + ".png";
+    }
+
+    // Le nom du pays est affiché quand il n'est pas la question :
+    // modes Capitales, ou étapes suivantes du mode Ultime.
+    var showName = mode.showName || state.step > 0;
+    flagCaption.textContent = showName ? c.name : "";
+    flagCaption.hidden = !showName;
+
+    // Indication d'étape (mode Ultime uniquement).
+    if (mode.steps.length > 1) {
+      stepHint.textContent = "Étape " + (state.step + 1) + "/" + mode.steps.length + " · " + STEP_PROMPTS[kind];
+      stepHint.hidden = false;
+    } else {
+      stepHint.hidden = true;
+    }
 
     feedback.className = "feedback";
     feedback.textContent = "";
@@ -199,17 +267,19 @@
     form.hidden = true;
     choicesBox.hidden = true;
     mapBox.hidden = true;
+    screens.game.classList.toggle("screen--map", kind === "map");
 
-    if (state.mode === "qcm") {
+    if (kind === "name-qcm" || kind === "capital-qcm") {
       choicesBox.hidden = false;
-      buildChoices(c);
-    } else if (state.mode === "map") {
+      buildChoices(c, isCapitalStep(kind));
+    } else if (kind === "map") {
       mapBox.hidden = false;
       WorldMap.clearMarks();
       WorldMap.reset();
       WorldMap.setEnabled(true);
     } else {
       form.hidden = false;
+      input.placeholder = STEP_PROMPTS[kind];
       input.value = "";
       input.disabled = false;
       input.focus();
@@ -219,8 +289,9 @@
     updateHud();
   }
 
-  // Construit les 4 propositions : la bonne + 3 pays tirés au hasard.
-  function buildChoices(c) {
+  // Construit les 4 propositions : la bonne + 3 tirées au hasard.
+  // `capitals` = true : on propose des capitales au lieu de noms de pays.
+  function buildChoices(c, capitals) {
     var pool = [];
     while (pool.length < 3) {
       var pick = COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)];
@@ -231,47 +302,50 @@
 
     choicesBox.innerHTML = "";
     shuffle(pool.concat([c])).forEach(function (country, i) {
+      var label = capitals ? capitalOf(country.code) : country.name;
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "choice";
       btn.dataset.code = country.code;
-      btn.innerHTML = "<span class='choice__key'>" + (i + 1) + "</span>" + country.name;
+      btn.dataset.label = label;
+      btn.innerHTML = "<span class='choice__key'>" + (i + 1) + "</span>" + label;
       btn.addEventListener("click", function () { pickChoice(country.code); });
       choicesBox.appendChild(btn);
     });
   }
 
   function pickChoice(code) {
-    if (AWAIT_NEXT || !state || state.mode !== "qcm") return;
+    if (AWAIT_NEXT || !state || stepKind().indexOf("qcm") === -1) return;
     var c = current();
+    var picked = null;
 
     // Verrouille les 4 boutons et colore la bonne / la mauvaise réponse.
     Array.prototype.forEach.call(choicesBox.children, function (btn) {
       btn.disabled = true;
       if (btn.dataset.code === c.code) btn.classList.add("is-correct");
-      else if (btn.dataset.code === code) btn.classList.add("is-wrong");
+      else if (btn.dataset.code === code) { btn.classList.add("is-wrong"); picked = btn.dataset.label; }
     });
 
-    if (code === c.code) return handleCorrect(c);
-    handleWrong(c, countryByCode(code).name);
+    if (code === c.code) return stepSuccess(c, false);
+    stepFail(c, picked);
   }
 
-  // Mode carte : clic sur un pays.
+  // Étape carte : clic sur un pays.
   function pickCountry(code) {
-    if (AWAIT_NEXT || !state || state.mode !== "map") return;
+    if (AWAIT_NEXT || !state || stepKind() !== "map") return;
     var c = current();
 
     WorldMap.setEnabled(false);
     if (code === c.code) {
       WorldMap.mark(code, "correct");
-      return handleCorrect(c);
+      return stepSuccess(c, false);
     }
 
     // On montre l'erreur et on recadre sur la bonne réponse.
     WorldMap.mark(code, "wrong");
     WorldMap.mark(c.code, "correct");
     WorldMap.focus(c.code);
-    handleWrong(c, countryByCode(code).name);
+    stepFail(c, countryByCode(code).name);
   }
 
   flagImg.addEventListener("load", function () { flagImg.classList.remove("is-loading"); });
@@ -291,7 +365,7 @@
   /* ------------------------------------------------------------------
      Réponses
      ------------------------------------------------------------------ */
-  // Mode réponse libre : on compare la saisie au pays attendu.
+  // Étapes en réponse libre : nom du pays ou capitale.
   function submitAnswer() {
     if (AWAIT_NEXT) return goNext();
 
@@ -299,37 +373,59 @@
     if (!raw) return;
 
     var c = current();
-    var found = matchAnswer(raw);
+    if (isCapitalStep(stepKind())) {
+      var res = matchCapital(raw, c.code);
+      if (res.ok) return stepSuccess(c, res.fuzzy);
+      return stepFail(c, raw);
+    }
 
-    if (found && found.code === c.code) return handleCorrect(c, found.fuzzy);
-    handleWrong(c, found ? countryByCode(found.code).name : null);
+    var found = matchAnswer(raw);
+    if (found && found.code === c.code) return stepSuccess(c, found.fuzzy);
+    stepFail(c, found ? countryByCode(found.code).name : null);
   }
 
-  // Le drapeau est trouvé : il sort définitivement du paquet.
-  function handleCorrect(c, fuzzy) {
-    if (!state.missed[c.code]) state.firstTry++;
-    state.solved++;
-    state.queue.shift();
+  // Réponse attendue à l'étape courante, pour l'afficher.
+  function expectedAnswer(c) {
+    return isCapitalStep(stepKind()) ? capitalOf(c.code) : c.name;
+  }
+
+  // Étape réussie : étape suivante, ou drapeau terminé.
+  function stepSuccess(c, fuzzy) {
+    var mode = MODES[state.mode];
+    var answer = expectedAnswer(c);
+    var last = state.step >= mode.steps.length - 1;
 
     feedback.className = "feedback feedback--ok";
-    feedback.innerHTML = "✅ Exact : <b>" + c.name + "</b>" +
-      (fuzzy ? "<small>Orthographe exacte : " + c.name + "</small>" : "");
+    feedback.innerHTML = "✅ Exact : <b>" + answer + "</b>" +
+      (fuzzy ? "<small>Orthographe exacte : " + answer + "</small>" : "") +
+      (last ? "" : "<small>" + STEP_PROMPTS[mode.steps[state.step + 1]] + "…</small>");
+
+    if (last) {
+      // Le drapeau est trouvé : il sort définitivement du paquet.
+      if (!state.missed[c.code]) state.firstTry++;
+      state.solved++;
+      state.queue.shift();
+      state.step = 0;
+    } else {
+      state.step++;
+    }
     updateHud();
 
-    // Petite pause pour laisser lire le retour, puis carte suivante.
+    // Petite pause pour laisser lire le retour, puis suite.
     input.disabled = true;
     setTimeout(function () { if (state) render(); }, 550);
   }
 
-  // Mauvaise réponse : on remet le drapeau plus loin dans le paquet.
-  function handleWrong(c, proposedName) {
+  // Étape ratée : on remet le drapeau plus loin dans le paquet.
+  function stepFail(c, proposed) {
     state.errors++;
     state.missed[c.code] = (state.missed[c.code] || 0) + 1;
 
-    var verb = state.mode === "map" ? "cliqué sur" : "répondu";
+    var kind = stepKind();
+    var verb = kind === "map" ? "cliqué sur" : "répondu";
     feedback.className = "feedback feedback--ko";
-    feedback.innerHTML = "❌ Raté" + (proposedName ? " — tu as " + verb + " <b>" + proposedName + "</b>" : "") +
-      ". C'était <b>" + c.name + "</b>." +
+    feedback.innerHTML = "❌ Raté" + (proposed ? " — tu as " + verb + " <b>" + proposed + "</b>" : "") + ". " +
+      (isCapitalStep(kind) ? "La capitale, c'était <b>" + capitalOf(c.code) + "</b>." : "C'était <b>" + c.name + "</b>.") +
       "<small>Ce drapeau reviendra plus tard dans la partie.</small>";
 
     requeueCurrent();
@@ -340,7 +436,8 @@
     if (AWAIT_NEXT) return goNext();
 
     var c = current();
-    if (state.mode === "map") {
+    var kind = stepKind();
+    if (kind === "map") {
       WorldMap.setEnabled(false);
       WorldMap.mark(c.code, "correct");
       WorldMap.focus(c.code);
@@ -349,7 +446,8 @@
     state.missed[c.code] = (state.missed[c.code] || 0) + 1;
 
     feedback.className = "feedback feedback--ko";
-    feedback.innerHTML = "👉 C'était <b>" + c.name + "</b>." +
+    feedback.innerHTML = "👉 " +
+      (isCapitalStep(kind) ? "La capitale, c'était <b>" + capitalOf(c.code) + "</b>." : "C'était <b>" + c.name + "</b>.") +
       "<small>Ce drapeau reviendra plus tard dans la partie.</small>";
 
     requeueCurrent();
@@ -377,6 +475,7 @@
 
   function goNext() {
     AWAIT_NEXT = false;
+    state.step = 0;          // le drapeau suivant repart de la première étape
     render();
   }
 
@@ -477,7 +576,7 @@
     block.hidden = false;
   }
 
-  // Record affiché sur l'écran d'accueil, pour le mode et la taille choisis.
+  // Record affiché sur l'écran de réglages, pour le mode et la taille choisis.
   function updateBestLine() {
     var size = parseInt($("deck-size").value, 10) || 0;
     var b = Scores.best(MODE, size);
@@ -487,24 +586,42 @@
   }
 
   /* ------------------------------------------------------------------
-     Branchements
+     Menu et réglages
      ------------------------------------------------------------------ */
   $("opt-all").textContent = "Tous les drapeaux (" + COUNTRIES.length + ")";
 
-  /* Menu principal : deux entrées. « Drapeaux » regroupe les modes réponse
-     libre et QCM ; « Carte » est un mode à part entière. */
+  /* Chaque entrée du menu est une catégorie. `modes` = variantes proposées
+     par le sélecteur (réponse libre / QCM) ; `mode` = mode unique. */
   var CATEGORIES = {
-    flag: { title: "Drapeaux", desc: "Un drapeau s'affiche, à toi de retrouver son pays." },
-    map:  { title: "Carte",    desc: "Un drapeau s'affiche, clique sur son pays sur la carte du monde." }
+    flag:     { title: "Drapeaux",  desc: "Un drapeau s'affiche, à toi de retrouver son pays.",
+                modes: { open: "open", qcm: "qcm" } },
+    capital:  { title: "Capitales", desc: "Un drapeau et son pays s'affichent, à toi de donner la capitale.",
+                modes: { open: "cap-open", qcm: "cap-qcm" } },
+    map:      { title: "Carte",     desc: "Un drapeau s'affiche, clique sur son pays sur la carte du monde.",
+                mode: "map" },
+    ultimate: { title: "Ultime",    desc: "Pour chaque drapeau : son pays, sa place sur la carte, puis sa capitale. Une seule erreur et il revient dans le paquet.",
+                mode: "ultimate" }
   };
-  var flagMode = "open";      // dernier mode choisi dans la catégorie Drapeaux
+  var currentCategory = "flag";
+  var lastToggle = {};        // catégorie -> "open" | "qcm" (dernier choix)
 
   function openSetup(category) {
     var cat = CATEGORIES[category];
-    MODE = category === "map" ? "map" : flagMode;
+    currentCategory = category;
+
+    if (cat.modes) {
+      var t = lastToggle[category] || "open";
+      MODE = cat.modes[t];
+      Array.prototype.forEach.call($("mode-toggle").children, function (b) {
+        b.classList.toggle("is-active", b.dataset.mode === t);
+      });
+    } else {
+      MODE = cat.mode;
+    }
+
     $("setup-title").textContent = cat.title;
     $("setup-desc").textContent = cat.desc;
-    $("field-mode").hidden = category === "map";
+    $("field-mode").hidden = !cat.modes;
     showScreen("start");
     updateBestLine();
   }
@@ -516,10 +633,13 @@
   $("btn-back").addEventListener("click", function () { showScreen("menu"); });
   $("btn-menu").addEventListener("click", function () { showScreen("menu"); });
 
-  // Choix du mode dans la catégorie Drapeaux.
+  // Sélecteur réponse libre / QCM (catégories Drapeaux et Capitales).
   Array.prototype.forEach.call($("mode-toggle").children, function (btn) {
     btn.addEventListener("click", function () {
-      MODE = flagMode = btn.dataset.mode;
+      var cat = CATEGORIES[currentCategory];
+      if (!cat.modes) return;
+      lastToggle[currentCategory] = btn.dataset.mode;
+      MODE = cat.modes[btn.dataset.mode];
       Array.prototype.forEach.call($("mode-toggle").children, function (b) {
         b.classList.toggle("is-active", b === btn);
       });
@@ -542,6 +662,9 @@
     renderBoard(-1);
   });
 
+  /* ------------------------------------------------------------------
+     Saisie et clavier
+     ------------------------------------------------------------------ */
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     submitAnswer();
@@ -556,7 +679,7 @@
     if (!screens.game.classList.contains("screen--active")) return;
 
     // En QCM, les touches 1 à 4 sélectionnent une proposition.
-    if (!AWAIT_NEXT && state && state.mode === "qcm" && /^[1-4]$/.test(e.key)) {
+    if (!AWAIT_NEXT && state && stepKind().indexOf("qcm") !== -1 && /^[1-4]$/.test(e.key)) {
       var btn = choicesBox.children[Number(e.key) - 1];
       if (btn && !btn.disabled) { e.preventDefault(); pickChoice(btn.dataset.code); }
       return;

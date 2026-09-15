@@ -29,7 +29,11 @@ var Scores = (function () {
 
   function key(mode, size) { return mode + ":" + size; }
 
-  var MODE_LABELS = { open: "Réponse libre", qcm: "QCM", map: "Carte" };
+  var MODE_LABELS = {
+    "open": "Drapeaux · libre", "qcm": "Drapeaux · QCM",
+    "cap-open": "Capitales · libre", "cap-qcm": "Capitales · QCM",
+    "map": "Carte", "ultimate": "Ultime"
+  };
 
   function label(mode, size) {
     return (MODE_LABELS[mode] || mode) +

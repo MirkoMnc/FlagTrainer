@@ -204,6 +204,27 @@ select:focus, .answer__input:focus {
 .menu-card__title { font-size: 1.35rem; font-weight: 700; }
 .menu-card__desc { color: var(--muted); font-size: .92rem; line-height: 1.45; }
 
+.menu-card--ultimate {
+  border-color: rgba(255, 196, 77, .45);
+  background: linear-gradient(135deg, #2a2438, var(--card));
+}
+.menu-card--ultimate:hover { border-color: #ffc44d; }
+.menu-card--ultimate .menu-card__title { color: #ffc44d; }
+
+/* ---------- nom du pays & étape (modes Capitales et Ultime) ---------- */
+.flag-box { flex-direction: column; gap: 12px; }
+.flag-caption { font-size: 1.25rem; font-weight: 700; text-align: center; }
+
+.step-hint {
+  margin: -8px 0 14px;
+  color: var(--accent);
+  font-size: .9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.screen--map .step-hint { order: -3; }
+
 #btn-back { margin-bottom: 14px; }
 #setup-title { margin-top: 0; }
 
