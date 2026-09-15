@@ -29,8 +29,10 @@ var Scores = (function () {
 
   function key(mode, size) { return mode + ":" + size; }
 
+  var MODE_LABELS = { open: "Réponse libre", qcm: "QCM", map: "Carte" };
+
   function label(mode, size) {
-    return (mode === "qcm" ? "QCM" : "Réponse libre") +
+    return (MODE_LABELS[mode] || mode) +
       " · " + (Number(size) > 0 ? size + " drapeaux" : "tous les drapeaux");
   }
 

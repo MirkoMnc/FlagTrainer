@@ -111,7 +111,9 @@
   var btnSkip = $("btn-skip");
   var btnNext = $("btn-next");
   var choicesBox = $("choices");
+  var mapBox = $("map-box");
   var preloader = new Image();
+  var ALL_CODES = new Set(COUNTRIES.map(function (c) { return c.code; }));
 
   /* ------------------------------------------------------------------
      État de la partie
@@ -140,21 +142,38 @@
     var deck = shuffle(COUNTRIES);
     if (size > 0 && size < deck.length) deck = deck.slice(0, size);
 
-    state = {
-      queue: deck,                 // drapeaux restant à trouver
-      mode: MODE,
-      size: size,                  // catégorie de classement (0 = tous)
-      total: deck.length,
-      solved: 0,
-      errors: 0,
-      firstTry: 0,
-      missed: {},                  // code -> nombre d'erreurs
-      startedAt: Date.now()
-    };
+    function begin() {
+      state = {
+        queue: deck,                 // drapeaux restant à trouver
+        mode: MODE,
+        size: size,                  // catégorie de classement (0 = tous)
+        total: deck.length,
+        solved: 0,
+        errors: 0,
+        firstTry: 0,
+        missed: {},                  // code -> nombre d'erreurs
+        startedAt: Date.now()
+      };
 
-    AWAIT_NEXT = false;
-    showScreen("game");
-    render();
+      AWAIT_NEXT = false;
+      screens.game.classList.toggle("screen--map", MODE === "map");
+      showScreen("game");
+      render();
+    }
+
+    if (MODE !== "map") return begin();
+
+    // Le mode carte charge la carte (≈1 Mo) la première fois seulement.
+    var btn = $("btn-start");
+    btn.disabled = true;
+    btn.textContent = "Chargement de la carte…";
+    WorldMap.mount($("map"), { codes: ALL_CODES, onPick: pickCountry }).then(
+      function () { btn.disabled = false; btn.textContent = "Start"; begin(); },
+      function () {
+        btn.disabled = false; btn.textContent = "Start";
+        alert("Impossible de charger la carte. Vérifie ta connexion puis réessaie.");
+      }
+    );
   }
 
   /* ------------------------------------------------------------------
@@ -177,12 +196,19 @@
     feedback.textContent = "";
     btnNext.hidden = true;
 
+    form.hidden = true;
+    choicesBox.hidden = true;
+    mapBox.hidden = true;
+
     if (state.mode === "qcm") {
-      form.hidden = true;
       choicesBox.hidden = false;
       buildChoices(c);
+    } else if (state.mode === "map") {
+      mapBox.hidden = false;
+      WorldMap.clearMarks();
+      WorldMap.reset();
+      WorldMap.setEnabled(true);
     } else {
-      choicesBox.hidden = true;
       form.hidden = false;
       input.value = "";
       input.disabled = false;
@@ -227,6 +253,24 @@
     });
 
     if (code === c.code) return handleCorrect(c);
+    handleWrong(c, countryByCode(code).name);
+  }
+
+  // Mode carte : clic sur un pays.
+  function pickCountry(code) {
+    if (AWAIT_NEXT || !state || state.mode !== "map") return;
+    var c = current();
+
+    WorldMap.setEnabled(false);
+    if (code === c.code) {
+      WorldMap.mark(code, "correct");
+      return handleCorrect(c);
+    }
+
+    // On montre l'erreur et on recadre sur la bonne réponse.
+    WorldMap.mark(code, "wrong");
+    WorldMap.mark(c.code, "correct");
+    WorldMap.focus(c.code);
     handleWrong(c, countryByCode(code).name);
   }
 
@@ -282,8 +326,9 @@
     state.errors++;
     state.missed[c.code] = (state.missed[c.code] || 0) + 1;
 
+    var verb = state.mode === "map" ? "cliqué sur" : "répondu";
     feedback.className = "feedback feedback--ko";
-    feedback.innerHTML = "❌ Raté" + (proposedName ? " — tu as répondu <b>" + proposedName + "</b>" : "") +
+    feedback.innerHTML = "❌ Raté" + (proposedName ? " — tu as " + verb + " <b>" + proposedName + "</b>" : "") +
       ". C'était <b>" + c.name + "</b>." +
       "<small>Ce drapeau reviendra plus tard dans la partie.</small>";
 
@@ -295,6 +340,11 @@
     if (AWAIT_NEXT) return goNext();
 
     var c = current();
+    if (state.mode === "map") {
+      WorldMap.setEnabled(false);
+      WorldMap.mark(c.code, "correct");
+      WorldMap.focus(c.code);
+    }
     state.errors++;
     state.missed[c.code] = (state.missed[c.code] || 0) + 1;
 
@@ -495,6 +545,10 @@
   });
 
   btnSkip.addEventListener("click", skipAnswer);
+  $("btn-reveal").addEventListener("click", skipAnswer);
+  $("btn-zoom-in").addEventListener("click", WorldMap.zoomIn);
+  $("btn-zoom-out").addEventListener("click", WorldMap.zoomOut);
+  $("btn-zoom-reset").addEventListener("click", WorldMap.reset);
 
   $("btn-quit").addEventListener("click", function () {
     if (state && confirm("Abandonner la partie en cours ?")) endGame(true);

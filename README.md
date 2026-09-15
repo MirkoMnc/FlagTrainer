@@ -17,7 +17,7 @@ puis ouvre http://localhost:5173.
 > Les images des drapeaux sont chargées depuis [flagcdn.com](https://flagcdn.com) :
 > une connexion internet est nécessaire.
 
-## Deux modes de jeu
+## Trois modes de jeu
 
 Le mode se choisit sur l'écran d'accueil.
 
@@ -25,6 +25,11 @@ Le mode se choisit sur l'écran d'accueil.
 |---|---|
 | **Réponse libre** | Tu tapes le nom du pays, puis **Entrée** (ou **Valider**). Un bouton **Je ne sais pas** révèle la réponse. |
 | **QCM — 4 choix** | Quatre propositions, dont la bonne. Clic, ou touches **1** à **4**. La bonne réponse passe en vert, ton erreur en rouge. |
+| **Carte** | Tu cliques sur le pays directement sur une carte du monde. Molette ou boutons **+ / −** pour zoomer, glisser pour déplacer, **⟲** pour revenir à la vue monde. En cas d'erreur, la carte se recadre sur la bonne réponse. |
+
+En mode carte, les micro-États (Monaco, Singapour, Malte, îles du Pacifique…)
+sont signalés par un petit cercle cliquable. La carte (≈ 1 Mo) n'est chargée
+que la première fois que ce mode est lancé.
 
 ## Règles
 
@@ -72,8 +77,26 @@ index.html         écrans (accueil / jeu / résultats)
 css/style.css      thème sombre, responsive
 js/countries.js    les 195 pays : code ISO, nom français, synonymes
 js/scores.js       classement local (localStorage), une liste par catégorie
+js/map.js          carte interactive du mode Carte (zoom, clic, recadrage)
+js/world-map-data.js  la carte SVG sous forme de chaîne JS, chargée à la demande
 js/app.js          logique du jeu (paquet, modes, comparaison, score)
+assets/world.svg   source de la carte (voir ci-dessous)
 dev-server.js      serveur statique optionnel
+```
+
+## Carte du monde
+
+La carte vient de [BlankMap-World.svg](https://commons.wikimedia.org/wiki/File:BlankMap-World.svg)
+(Wikimedia Commons, domaine public). Chaque pays y est identifié par son code
+ISO 3166-1 alpha-2, ce qui permet de faire le lien avec `js/countries.js`.
+
+`assets/world.svg` est la version nettoyée (sans commentaires, sans feuille de
+style et **sans les balises `<title>`** — elles afficheraient le nom du pays au
+survol). `js/world-map-data.js` en est la copie sous forme de chaîne JS ; pour
+la régénérer après modification du SVG :
+
+```bash
+node -e "const fs=require('fs');fs.writeFileSync('js/world-map-data.js','var WORLD_SVG = '+JSON.stringify(fs.readFileSync('assets/world.svg','utf8'))+';\n')"
 ```
 
 ## Personnaliser

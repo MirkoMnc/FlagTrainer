@@ -27,6 +27,7 @@
       <div class="segmented" id="mode-toggle" role="group" aria-label="Mode de jeu">
         <button type="button" class="segmented__btn is-active" data-mode="open">Réponse libre</button>
         <button type="button" class="segmented__btn" data-mode="qcm">QCM — 4 choix</button>
+        <button type="button" class="segmented__btn" data-mode="map">Carte</button>
       </div>
     </div>
 
@@ -62,6 +63,18 @@
 
     <!-- mode QCM : 4 propositions -->
     <div id="choices" class="choices" hidden></div>
+
+    <!-- mode carte : cliquer sur le pays -->
+    <div id="map-box" class="map-box" hidden>
+      <div id="map" class="map" aria-label="Carte du monde : clique sur le pays du drapeau"></div>
+      <div class="map__tools">
+        <button id="btn-zoom-in" class="btn btn--ghost btn--small" type="button" title="Zoom avant">+</button>
+        <button id="btn-zoom-out" class="btn btn--ghost btn--small" type="button" title="Zoom arrière">−</button>
+        <button id="btn-zoom-reset" class="btn btn--ghost btn--small" type="button" title="Vue monde">⟲</button>
+        <span class="map__hint">Molette pour zoomer, glisser pour déplacer</span>
+        <button id="btn-reveal" class="btn btn--ghost btn--small" type="button">Je ne sais pas</button>
+      </div>
+    </div>
 
     <!-- mode réponse libre -->
     <form id="answer-form" class="answer" autocomplete="off">
@@ -105,6 +118,7 @@
 
 <script src="js/countries.js"></script>
 <script src="js/scores.js"></script>
+<script src="js/map.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

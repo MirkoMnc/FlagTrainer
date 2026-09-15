@@ -250,6 +250,73 @@ select:focus, .answer__input:focus {
 
 #btn-next { min-width: 180px; }
 
+/* ---------- mode carte ---------- */
+.screen--map .flag-box { min-height: 0; padding: 14px; margin-bottom: 14px; }
+.screen--map .flag { max-height: 140px; }
+
+/* Le retour et « Continuer » passent entre le drapeau et la carte,
+   pour rester visibles sans faire défiler la page. */
+.screen--map.screen--active { display: flex; flex-direction: column; }
+.screen--map .hud, .screen--map .progress, .screen--map .flag-box { order: -3; }
+.screen--map .feedback, .screen--map #btn-next { order: -2; }
+.screen--map .feedback { margin: 0 0 12px; min-height: 0; }
+.screen--map .feedback:empty { display: none; }
+.screen--map #btn-next { align-self: flex-start; margin-bottom: 14px; }
+
+.map-box {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.map {
+  aspect-ratio: 2754 / 1398;
+  width: 100%;
+  background: #121a2a;
+  cursor: grab;
+  touch-action: none;          /* le doigt déplace la carte, pas la page */
+  user-select: none;
+}
+.map:active { cursor: grabbing; }
+.map.is-locked { cursor: default; }
+.map svg { display: block; width: 100%; height: 100%; }
+
+/* Couches de la carte (les classes viennent du SVG de Wikimedia). */
+.map .oceanxx  { fill: #121a2a; stroke: none; }
+.map .landxx   { fill: #3b4a66; stroke: #121a2a; stroke-width: .6; fill-rule: evenodd; }
+.map .antxx    { fill: #27314a; pointer-events: none; }
+.map .limitxx, .map .unxx, .map .noxx, .map .subxx { display: none; }
+
+/* Cercles des micro-États : visibles uniquement pour les pays du jeu. */
+.map .circlexx { display: none; }
+.map .circlexx.is-playable {
+  display: inline;
+  fill: rgba(79, 140, 255, .18);
+  stroke: #7ea4ff;
+  stroke-width: 1.5;
+}
+
+.map .is-hover .landxx, .map .is-hover.landxx { fill: #5b7fc0; }
+.map .is-hover.circlexx { fill: rgba(79, 140, 255, .45); }
+
+.map .is-correct .landxx, .map .is-correct.landxx { fill: var(--ok) !important; }
+.map .is-correct.circlexx { fill: var(--ok) !important; stroke: var(--ok); }
+.map .is-wrong .landxx, .map .is-wrong.landxx { fill: var(--ko) !important; }
+.map .is-wrong.circlexx { fill: var(--ko) !important; stroke: var(--ko); }
+
+.map__tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.map__tools .btn--small { min-width: 38px; font-size: 1rem; line-height: 1; padding: 7px 10px; }
+.map__hint { color: var(--muted); font-size: .8rem; flex: 1; }
+#btn-reveal { margin-left: auto; }
+
 /* ---------- réponse ---------- */
 .answer {
   display: flex;
@@ -341,6 +408,7 @@ select:focus, .answer__input:focus {
 .board__row.is-new .board__score { color: var(--accent); }
 
 @media (max-width: 480px) {
+  .map__hint { display: none; }      /* pas de molette sur mobile */
   .choices { grid-template-columns: 1fr; }
   .segmented { width: 100%; }
   .segmented__btn { flex: 1; padding: 9px 8px; }
