@@ -11,23 +11,42 @@
 
 <main class="app">
 
-  <!-- ÉCRAN 1 : ACCUEIL -->
-  <section id="screen-start" class="screen screen--active">
+  <!-- ÉCRAN 0 : MENU PRINCIPAL -->
+  <section id="screen-menu" class="screen screen--active">
     <h1 class="title">Flag<span>Trainer</span></h1>
-    <p class="subtitle">Apprends à reconnaître les drapeaux du monde entier.</p>
+    <p class="subtitle">Apprends les drapeaux du monde entier. Choisis ton entraînement :</p>
+
+    <div class="menu">
+      <button type="button" class="menu-card" data-category="flag">
+        <span class="menu-card__icon">🚩</span>
+        <span class="menu-card__title">Drapeaux</span>
+        <span class="menu-card__desc">Un drapeau s'affiche : retrouve son pays, en réponse libre ou en QCM.</span>
+      </button>
+      <button type="button" class="menu-card" data-category="map">
+        <span class="menu-card__icon">🗺️</span>
+        <span class="menu-card__title">Carte</span>
+        <span class="menu-card__desc">Un drapeau s'affiche : clique sur son pays sur la carte du monde.</span>
+      </button>
+    </div>
 
     <ul class="rules">
       <li><b>Bonne réponse</b> : le drapeau sort du paquet.</li>
       <li><b>Mauvaise réponse</b> : il revient plus tard, à une place aléatoire.</li>
       <li>La partie se termine quand le paquet est vide.</li>
     </ul>
+  </section>
 
-    <div class="field">
+  <!-- ÉCRAN 1 : RÉGLAGES DE LA PARTIE -->
+  <section id="screen-start" class="screen">
+    <button id="btn-back" class="btn btn--ghost btn--small" type="button">← Menu</button>
+    <h2 id="setup-title" class="title title--small">Drapeaux</h2>
+    <p id="setup-desc" class="subtitle"></p>
+
+    <div class="field" id="field-mode">
       <label>Mode de jeu</label>
       <div class="segmented" id="mode-toggle" role="group" aria-label="Mode de jeu">
         <button type="button" class="segmented__btn is-active" data-mode="open">Réponse libre</button>
         <button type="button" class="segmented__btn" data-mode="qcm">QCM — 4 choix</button>
-        <button type="button" class="segmented__btn" data-mode="map">Carte</button>
       </div>
     </div>
 
@@ -111,7 +130,10 @@
       <div id="review-list" class="review__list"></div>
     </div>
 
-    <button id="btn-replay" class="btn btn--primary btn--big">Rejouer</button>
+    <div class="end-actions">
+      <button id="btn-replay" class="btn btn--primary btn--big">Rejouer</button>
+      <button id="btn-menu" class="btn btn--ghost btn--big" type="button">Menu principal</button>
+    </div>
   </section>
 
 </main>

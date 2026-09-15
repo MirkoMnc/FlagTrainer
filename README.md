@@ -19,7 +19,9 @@ puis ouvre http://localhost:5173.
 
 ## Trois modes de jeu
 
-Le mode se choisit sur l'écran d'accueil.
+Le menu principal propose deux entrées : **Drapeaux** (réponse libre ou QCM)
+et **Carte**. Chacune mène à un écran de réglages (mode, nombre de drapeaux,
+record en cours) avant de lancer la partie.
 
 | Mode | Comment on répond |
 |---|---|
@@ -33,7 +35,7 @@ que la première fois que ce mode est lancé.
 
 ## Règles
 
-1. L'écran d'accueil propose le mode, le nombre de drapeaux, et un bouton **Start**.
+1. Depuis le menu, choisis **Drapeaux** ou **Carte**, puis le mode et le nombre de drapeaux, et **Start**.
 2. Les drapeaux sont présentés un par un, dans un ordre mélangé.
 3. À chaque drapeau :
    - **Bonne réponse** → le drapeau sort définitivement du paquet.

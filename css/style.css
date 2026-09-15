@@ -175,6 +175,40 @@ select:focus, .answer__input:focus {
 .flag.is-loading { opacity: 0; }
 .flag { transition: opacity .2s ease; }
 
+/* ---------- menu principal ---------- */
+.menu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.menu-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color .15s ease, transform .12s ease, background .15s ease;
+}
+.menu-card:hover { border-color: var(--accent); background: #1f2b40; transform: translateY(-2px); }
+.menu-card:active { transform: none; }
+.menu-card__icon { font-size: 2rem; line-height: 1; }
+.menu-card__title { font-size: 1.35rem; font-weight: 700; }
+.menu-card__desc { color: var(--muted); font-size: .92rem; line-height: 1.45; }
+
+#btn-back { margin-bottom: 14px; }
+#setup-title { margin-top: 0; }
+
+.end-actions { display: grid; gap: 10px; }
+
 /* ---------- sélecteur de mode (accueil) ---------- */
 .segmented {
   display: inline-flex;
@@ -408,6 +442,7 @@ select:focus, .answer__input:focus {
 .board__row.is-new .board__score { color: var(--accent); }
 
 @media (max-width: 480px) {
+  .menu { grid-template-columns: 1fr; }
   .map__hint { display: none; }      /* pas de molette sur mobile */
   .choices { grid-template-columns: 1fr; }
   .segmented { width: 100%; }

@@ -102,7 +102,7 @@
      ------------------------------------------------------------------ */
   var $ = function (id) { return document.getElementById(id); };
 
-  var screens = { start: $("screen-start"), game: $("screen-game"), end: $("screen-end") };
+  var screens = { menu: $("screen-menu"), start: $("screen-start"), game: $("screen-game"), end: $("screen-end") };
   var flagImg = $("flag-img");
   var input = $("answer-input");
   var form = $("answer-form");
@@ -491,10 +491,35 @@
      ------------------------------------------------------------------ */
   $("opt-all").textContent = "Tous les drapeaux (" + COUNTRIES.length + ")";
 
-  // Choix du mode sur l'écran d'accueil.
+  /* Menu principal : deux entrées. « Drapeaux » regroupe les modes réponse
+     libre et QCM ; « Carte » est un mode à part entière. */
+  var CATEGORIES = {
+    flag: { title: "Drapeaux", desc: "Un drapeau s'affiche, à toi de retrouver son pays." },
+    map:  { title: "Carte",    desc: "Un drapeau s'affiche, clique sur son pays sur la carte du monde." }
+  };
+  var flagMode = "open";      // dernier mode choisi dans la catégorie Drapeaux
+
+  function openSetup(category) {
+    var cat = CATEGORIES[category];
+    MODE = category === "map" ? "map" : flagMode;
+    $("setup-title").textContent = cat.title;
+    $("setup-desc").textContent = cat.desc;
+    $("field-mode").hidden = category === "map";
+    showScreen("start");
+    updateBestLine();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".menu-card"), function (card) {
+    card.addEventListener("click", function () { openSetup(card.dataset.category); });
+  });
+
+  $("btn-back").addEventListener("click", function () { showScreen("menu"); });
+  $("btn-menu").addEventListener("click", function () { showScreen("menu"); });
+
+  // Choix du mode dans la catégorie Drapeaux.
   Array.prototype.forEach.call($("mode-toggle").children, function (btn) {
     btn.addEventListener("click", function () {
-      MODE = btn.dataset.mode;
+      MODE = flagMode = btn.dataset.mode;
       Array.prototype.forEach.call($("mode-toggle").children, function (b) {
         b.classList.toggle("is-active", b === btn);
       });
